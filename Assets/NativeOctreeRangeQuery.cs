@@ -12,7 +12,7 @@ namespace NativeOctree
 		{
 			NativeOctree<T> tree;
 
-			UnsafeList* fastResults;
+			UnsafeList<OctElement<T>>* fastResults;
 			int count;
 
 			AABB bounds;
@@ -24,7 +24,7 @@ namespace NativeOctree
 				count = 0;
 
 				// Get pointer to inner list data for faster writing
-				fastResults = (UnsafeList*) NativeListUnsafeUtility.GetInternalListDataPtrUnchecked(ref results);
+				fastResults = results.GetUnsafeList();
 
 				RecursiveRangeQuery(tree.bounds, false, 1, 1);
 
@@ -35,7 +35,7 @@ namespace NativeOctree
 			{
 				if(count + 8 * tree.maxLeafElements > fastResults->Capacity)
 				{
-					fastResults->Resize<OctElement<T>>(math.max(fastResults->Capacity * 2, count + 8 * tree.maxLeafElements));
+					fastResults->Resize(math.max(fastResults->Capacity * 2, count + 8 * tree.maxLeafElements));
 				}
 
 				var depthSize = LookupTables.DepthSizeLookup[tree.maxDepth - depth+1];
