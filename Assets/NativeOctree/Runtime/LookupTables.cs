@@ -1,3 +1,4 @@
+using System.Threading;
 using Unity.Burst;
 using Unity.Collections.LowLevel.Unsafe;
 
@@ -38,12 +39,11 @@ namespace NativeOctree
         internal static readonly SharedStatic<DepthLookupData> DepthLookup =
             SharedStatic<DepthLookupData>.GetOrCreate<DepthLookupKey>();
 
-        static bool s_Initialized;
+        static int s_Initialized;
 
         internal static unsafe void Initialize()
         {
-            if (s_Initialized) return;
-            s_Initialized = true;
+            if (Interlocked.CompareExchange(ref s_Initialized, 1, 0) != 0) return;
 
             ref var morton = ref MortonLookup.Data;
             var mortonSrc = new uint[]

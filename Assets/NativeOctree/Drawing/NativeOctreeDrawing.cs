@@ -20,6 +20,9 @@ namespace NativeOctree.Drawing
             var widthAdd = treeBounds.Center.x + treeBounds.Extents.x;
             var heightAdd = treeBounds.Center.y + treeBounds.Extents.y;
 
+            var maxX = texture.Length - 1;
+            var maxY = texture[0].Length - 1;
+
             var totalNodes = tree.NodeCount;
             var nodesPtr = tree.NodesPtr;
             var elementsPtr = tree.ElementsPtr;
@@ -34,16 +37,18 @@ namespace NativeOctree.Drawing
                 {
                     var element = elementsPtr[node.firstChildIndex + k];
                     DrawPoint(element, Color.red);
-                    texture[(int)((element.pos.x + widthAdd) * widthMult)]
-                           [(int)((element.pos.y + heightAdd) * heightMult)] = Color.red;
+                    var tx = Mathf.Clamp((int)((element.pos.x + widthAdd) * widthMult), 0, maxX);
+                    var ty = Mathf.Clamp((int)((element.pos.y + heightAdd) * heightMult), 0, maxY);
+                    texture[tx][ty] = Color.red;
                 }
             }
 
             foreach (var element in results)
             {
                 DrawPoint(element, Color.green);
-                texture[(int)((element.pos.x + widthAdd) * widthMult)]
-                       [(int)((element.pos.y + heightAdd) * heightMult)] = Color.green;
+                var tx = Mathf.Clamp((int)((element.pos.x + widthAdd) * widthMult), 0, maxX);
+                var ty = Mathf.Clamp((int)((element.pos.y + heightAdd) * heightMult), 0, maxY);
+                texture[tx][ty] = Color.green;
             }
 
             DrawBounds(texture, range, treeBounds);
@@ -64,13 +69,19 @@ namespace NativeOctree.Drawing
             var widthAdd = treeBounds.Center.x + treeBounds.Extents.x;
             var heightAdd = treeBounds.Center.y + treeBounds.Extents.y;
 
+            var maxX = texture.Length - 1;
+            var maxY = texture[0].Length - 1;
+
             var left = new float2(bounds.Center.x - bounds.Extents.x, bounds.Center.y);
 
             for (int leftToRight = 0; leftToRight < bounds.Extents.x * 2; leftToRight++)
             {
                 var posX = left.x + leftToRight;
-                texture[(int)((posX + widthAdd) * widthMult)][(int)((bounds.Center.y + heightAdd + bounds.Extents.y) * heightMult)] = Color.blue;
-                texture[(int)((posX + widthAdd) * widthMult)][(int)((bounds.Center.y + heightAdd - bounds.Extents.y) * heightMult)] = Color.blue;
+                var tx = Mathf.Clamp((int)((posX + widthAdd) * widthMult), 0, maxX);
+                var tyTop = Mathf.Clamp((int)((bounds.Center.y + heightAdd + bounds.Extents.y) * heightMult), 0, maxY);
+                var tyBot = Mathf.Clamp((int)((bounds.Center.y + heightAdd - bounds.Extents.y) * heightMult), 0, maxY);
+                texture[tx][tyTop] = Color.blue;
+                texture[tx][tyBot] = Color.blue;
             }
 
             var top = new float2(bounds.Center.x, bounds.Center.y - bounds.Extents.y);
@@ -78,8 +89,11 @@ namespace NativeOctree.Drawing
             for (int topToBottom = 0; topToBottom < bounds.Extents.y * 2; topToBottom++)
             {
                 var posY = top.y + topToBottom;
-                texture[(int)((bounds.Center.x + widthAdd + bounds.Extents.x) * widthMult)][(int)((posY + heightAdd) * heightMult)] = Color.blue;
-                texture[(int)((bounds.Center.x + widthAdd - bounds.Extents.x) * widthMult)][(int)((posY + heightAdd) * heightMult)] = Color.blue;
+                var txRight = Mathf.Clamp((int)((bounds.Center.x + widthAdd + bounds.Extents.x) * widthMult), 0, maxX);
+                var txLeft = Mathf.Clamp((int)((bounds.Center.x + widthAdd - bounds.Extents.x) * widthMult), 0, maxX);
+                var ty = Mathf.Clamp((int)((posY + heightAdd) * heightMult), 0, maxY);
+                texture[txRight][ty] = Color.blue;
+                texture[txLeft][ty] = Color.blue;
             }
         }
     }

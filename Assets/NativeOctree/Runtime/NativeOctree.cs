@@ -66,8 +66,10 @@ namespace NativeOctree
         public NativeOctree(AABB bounds, Allocator allocator = Allocator.Temp, int maxDepth = 6,
             int maxLeafElements = 16, int initialElementsCapacity = 256) : this()
         {
-            if (maxDepth > 8)
-                throw new InvalidOperationException("Max depth cannot exceed 8 (morton code table limit).");
+            if (maxDepth < 1 || maxDepth > 8)
+                throw new InvalidOperationException("Max depth must be between 1 and 8 (morton code table limit).");
+            if (maxLeafElements < 1)
+                throw new InvalidOperationException("Max leaf elements must be at least 1.");
 
             LookupTables.Initialize();
 
@@ -104,7 +106,7 @@ namespace NativeOctree
 
         /// <summary>
         /// Clear all elements and node data. Called automatically by <see cref="ClearAndBulkInsert"/>.
-        /// Only clears the used portion of lookup and nodes buffers; elements buffer is not
+        /// Clears the full lookup and nodes arrays (all pre-allocated nodes); elements buffer is not
         /// cleared since it is fully overwritten during bulk insert.
         /// </summary>
         public void Clear()

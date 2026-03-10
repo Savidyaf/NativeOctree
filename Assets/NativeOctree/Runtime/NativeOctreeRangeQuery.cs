@@ -35,12 +35,6 @@ namespace NativeOctree
 
             void RecursiveRangeQuery(AABB parentBounds, bool parentContained, int prevOffset, int depth)
             {
-                var requiredCapacity = count + 8 * tree.maxLeafElements;
-                if (requiredCapacity > fastResults->Capacity)
-                {
-                    fastResults->Resize(math.max(fastResults->Capacity * 2, requiredCapacity));
-                }
-
                 var depthSize = LookupTables.DepthSizeLookup.Data.Values[tree.maxDepth - depth + 1];
 
                 for (int l = 0; l < 8; l++)
@@ -71,6 +65,12 @@ namespace NativeOctree
                     else
                     {
                         var node = nodesPtr[at];
+
+                        var requiredCapacity = count + node.count;
+                        if (requiredCapacity > fastResults->Capacity)
+                        {
+                            fastResults->Resize(math.max(fastResults->Capacity * 2, requiredCapacity));
+                        }
 
                         if (contained)
                         {

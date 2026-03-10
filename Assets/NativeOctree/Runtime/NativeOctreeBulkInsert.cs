@@ -33,7 +33,7 @@ namespace NativeOctree
                 mortonCodes[i] = MortonCodeUtil.EncodeScaled(incomingElements[i].pos, bounds, depthExtentsScaling);
             }
 
-            var mortonCodesPtr = (int*)NativeArrayUnsafeUtility.GetUnsafeReadOnlyPtr(mortonCodes);
+            var mortonCodesPtr = (int*)mortonCodes.GetUnsafeReadOnlyPtr();
             ref var depthSizeLookupData = ref LookupTables.DepthSizeLookup.Data;
             var depthSizePtr = (int*)UnsafeUtility.AddressOf(ref depthSizeLookupData);
 
