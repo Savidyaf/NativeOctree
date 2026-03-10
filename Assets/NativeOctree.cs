@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Mathematics;
@@ -33,20 +33,19 @@ namespace NativeOctree
 	{
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
 		// Safety
-		AtomicSafetyHandle safetyHandle;
-		[NativeSetClassTypeToNullOnSchedule]
-		DisposeSentinel disposeSentinel;
+		AtomicSafetyHandle m_Safety;
+		static readonly int s_staticSafetyId = AtomicSafetyHandle.NewStaticSafetyId<NativeOctree<T>>();
 #endif
 
 		// Data
 		[NativeDisableUnsafePtrRestriction]
-		UnsafeList* elements;
+		UnsafeList<OctElement<T>>* elements;
 
 		[NativeDisableUnsafePtrRestriction]
-		UnsafeList* lookup;
+		UnsafeList<int>* lookup;
 
 		[NativeDisableUnsafePtrRestriction]
-		UnsafeList* nodes;
+		UnsafeList<OctNode>* nodes;
 
 		int elementsCount;
 
@@ -76,29 +75,19 @@ namespace NativeOctree
 			}
 
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-			CollectionHelper.CheckIsUnmanaged<T>();
-			DisposeSentinel.Create(out safetyHandle, out disposeSentinel, 1, allocator);
+			m_Safety = AtomicSafetyHandle.Create();
+			AtomicSafetyHandle.SetStaticSafetyId(ref m_Safety, s_staticSafetyId);
+			AtomicSafetyHandle.SetBumpSecondaryVersionOnScheduleWrite(m_Safety, true);
 #endif
 
 			// Allocate memory for every depth, the nodes on all depths are stored in a single continuous array
 			var totalSize = LookupTables.DepthSizeLookup[maxDepth+1];
 
-			lookup = UnsafeList.Create(UnsafeUtility.SizeOf<int>(),
-				UnsafeUtility.AlignOf<int>(),
-				totalSize,
-				allocator,
-				NativeArrayOptions.ClearMemory);
+			lookup = UnsafeList<int>.Create(totalSize, allocator, NativeArrayOptions.ClearMemory);
 
-			nodes = UnsafeList.Create(UnsafeUtility.SizeOf<OctNode>(),
-				UnsafeUtility.AlignOf<OctNode>(),
-				totalSize,
-				allocator,
-				NativeArrayOptions.ClearMemory);
+			nodes = UnsafeList<OctNode>.Create(totalSize, allocator, NativeArrayOptions.ClearMemory);
 
-			elements = UnsafeList.Create(UnsafeUtility.SizeOf<OctElement<T>>(),
-				UnsafeUtility.AlignOf<OctElement<T>>(),
-				initialElementsCapacity,
-				allocator);
+			elements = UnsafeList<OctElement<T>>.Create(initialElementsCapacity, allocator);
 		}
 
 		public void ClearAndBulkInsert(NativeArray<OctElement<T>> incomingElements)
@@ -108,13 +97,13 @@ namespace NativeOctree
 			Clear();
 
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-			AtomicSafetyHandle.CheckWriteAndBumpSecondaryVersion(safetyHandle);
+			AtomicSafetyHandle.CheckWriteAndBumpSecondaryVersion(m_Safety);
 #endif
 
 			// Resize if needed
 			if(elements->Capacity < elementsCount + incomingElements.Length)
 			{
-				elements->Resize<OctElement<T>>(math.max(incomingElements.Length, elements->Capacity*2));
+				elements->Resize(math.max(incomingElements.Length, elements->Capacity*2));
 			}
 
 			// Prepare morton codes
@@ -208,7 +197,7 @@ namespace NativeOctree
 		public void RangeQuery(AABB bounds, NativeList<OctElement<T>> results)
 		{
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-			AtomicSafetyHandle.CheckReadAndThrow(safetyHandle);
+			AtomicSafetyHandle.CheckReadAndThrow(m_Safety);
 #endif
 			new OctreeRangeQuery().Query(this, bounds, results);
 		}
@@ -216,7 +205,7 @@ namespace NativeOctree
 		public void Clear()
 		{
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-			AtomicSafetyHandle.CheckWriteAndBumpSecondaryVersion(safetyHandle);
+			AtomicSafetyHandle.CheckWriteAndBumpSecondaryVersion(m_Safety);
 #endif
 			UnsafeUtility.MemClear(lookup->Ptr, lookup->Capacity * UnsafeUtility.SizeOf<int>());
 			UnsafeUtility.MemClear(nodes->Ptr, nodes->Capacity * UnsafeUtility.SizeOf<OctNode>());
@@ -226,14 +215,15 @@ namespace NativeOctree
 
 		public void Dispose()
 		{
-			UnsafeList.Destroy(elements);
+			UnsafeList<OctElement<T>>.Destroy(elements);
 			elements = null;
-			UnsafeList.Destroy(lookup);
+			UnsafeList<int>.Destroy(lookup);
 			lookup = null;
-			UnsafeList.Destroy(nodes);
+			UnsafeList<OctNode>.Destroy(nodes);
 			nodes = null;
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-			DisposeSentinel.Dispose(ref safetyHandle, ref disposeSentinel);
+			AtomicSafetyHandle.CheckDeallocateAndThrow(m_Safety);
+			AtomicSafetyHandle.Release(m_Safety);
 #endif
 		}
 	}
