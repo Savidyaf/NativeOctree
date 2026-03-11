@@ -130,6 +130,9 @@ namespace NativeOctree
         internal int NodeCount => TotalNodeCount;
         internal OctNode* NodesPtr => nodes->Ptr;
         internal OctElement<T>* ElementsPtr => elements->Ptr;
+        internal int* LookupPtr => lookup->Ptr;
+        internal int MaxDepth => maxDepth;
+        internal int MaxLeafElements => maxLeafElements;
 
         /// <summary>
         /// Dispose all native memory. Must be called when the octree is no longer needed.
