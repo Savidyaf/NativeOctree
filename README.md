@@ -18,10 +18,11 @@ With Burst disabled the tests are about 10x slower.
 ## Stability
 The only tests test for performance so there's no real test coverage. I'm sure there's edge cases that are not caught. I would highly recommend writing more tests if you're planning to use the code in production.
 
-## Query debug view
-There's a very simple debug drawer that visualizes nodes and query hits. Example below is of a 200x1000x200m AABB.
+## Demo
 <p align="center">
-<img src="media/verticalquery.gif" width="500"/></br
+<img src="media/Demo.gif" width="500"/></br>
+</p><p align="center">
+<img src="media/Stats.gif" width="500"/></br>
 </p>
 
 ## Potential future work / missing features
